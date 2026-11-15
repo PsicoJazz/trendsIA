@@ -1,3 +1,5 @@
+# Para executar direto do código principal
+# python src/app.py
 
 import requests
 
