@@ -1,0 +1,23 @@
+# Ambiente virtual
+.venv/
+venv/
+
+# Credenciais
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Logs
+logs/
+*.log
+
+# Dados temporários
+data/temp/
+
+# VS Code
+.vscode/
