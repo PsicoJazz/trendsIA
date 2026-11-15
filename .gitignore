@@ -2,12 +2,15 @@
 .venv/
 venv/
 
-# Credenciais
+# Credenciais (o .env.example deve ser versionado)
 .env
+.env.*
+!.env.example
 
 # Python
 __pycache__/
 *.py[cod]
+.pytest_cache/
 
 # Jupyter
 .ipynb_checkpoints/
@@ -16,8 +19,12 @@ __pycache__/
 logs/
 *.log
 
-# Dados temporários
+# Saidas geradas e dados temporarios
+saida/
 data/temp/
+
+# Imagens Docker exportadas
+*.tar
 
 # VS Code
 .vscode/

@@ -1,0 +1,1 @@
+Aula sobre banco de dados, explicar tabelas, relacionamentos, chaves primarias e estrangeiras. Fazer uma atividade pratica com os alunos.

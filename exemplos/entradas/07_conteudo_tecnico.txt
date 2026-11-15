@@ -1,0 +1,1 @@
+Aula sobre redes: modelo OSI, camadas, TCP/IP, DNS e HTTP. Mostrar um exemplo com Wireshark se der tempo.
