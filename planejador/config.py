@@ -14,7 +14,7 @@ TIMEOUT_PADRAO = 120
 class Config:
     base_url: str
     modelo: str
-    api_key: str = field(repr=False)  # repr=False: a chave nunca aparece em print/log
+    api_key: str = field(default="", repr=False)  # opcional; repr=False: nunca aparece em print/log
     timeout: int = TIMEOUT_PADRAO
 
 
@@ -27,7 +27,7 @@ def carregar_config(env: Optional[Mapping[str, str]] = None) -> Config:
     def ler(nome: str) -> str:
         return (env.get(nome) or "").strip()
 
-    faltando = [n for n in ("LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY") if not ler(n)]
+    faltando = [n for n in ("LLM_BASE_URL", "LLM_MODEL") if not ler(n)]
     if faltando:
         # Informa apenas os NOMES das variaveis, nunca valores.
         raise ConfigError(

@@ -1,7 +1,7 @@
 # Relatório — Planejador de Aulas com LLM (P0)
 
 > Instruções de instalação, configuração e execução estão no [README](README.md); este relatório registra decisões, evidências e limitações.
-> Campos marcados **[PREENCHER]** dependem de execuções que só podem ser feitas por você (no horário agendado da plataforma, no seu repositório ou no Moodle). Não os preencha sem ter feito a verificação.
+
 
 ## 1. Problema
 
@@ -21,6 +21,7 @@ Onde uma regra basta, ela foi usada: validação de tamanho da entrada, validaç
 | Anotação delimitada por `<anotacao>…</anotacao>` e instrução de tratá-la como dado | Mitigação (não garantia) contra injeção de prompt |
 | Validar a entrada **antes** de ler a credencial | Entrada vazia é rejeitada sem exigir configuração nem consumir o horário agendado |
 | Hierarquia de erros com código de saída próprio | Execução termina de forma controlada e diferenciável (1 a 5) |
+| `LLM_API_KEY` **opcional**: o cabeçalho `Authorization` só é enviado se houver chave; se o serviço responder 401/403 sem chave, o erro orienta a defini-la | O guia da plataforma não menciona chave. A primeira versão a exigia; ao rodar na plataforma, o log `Configuracao incompleta ... LLM_API_KEY` mostrou que isso bloqueava a execução sem necessidade (veja 5.3) |
 | Mensagens e logs sem texto do usuário, sem resposta completa e sem chave; `repr=False` na chave; só o *tipo* da exceção de rede é registrado | Requisito de não expor dados; a mensagem de exceções de rede pode conter a URL completa |
 | Modo lote com saída em `/persistent/saida` | A plataforma executa contêineres sem terminal interativo, e só `/persistent` sobrevive à parada |
 | `requirements.txt` com versões fixas, `requirements-dev.txt` separado | Reprodutibilidade; a imagem não carrega o `pytest` |
@@ -55,9 +56,9 @@ Casos (arquivos em `exemplos/entradas/`):
 
 ### 5.1 Executadas (ambiente: Python 3.12.3, 15/11/2026, sem acesso à plataforma)
 
-- **Testes automatizados:** `python -m pytest` → **52 passed**. Nenhum faz chamada real ao LLM.
+- **Testes automatizados:** `python -m pytest` → **58 passed**. Nenhum faz chamada real ao LLM.
 - **Entrada vazia (execução real da CLI):** `Erro: A anotacao esta vazia. Escreva o que pretende ensinar, ...` — código de saída 1, nenhuma chamada ao LLM.
-- **Credencial ausente (execução real):** `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_BASE_URL, LLM_MODEL, LLM_API_KEY.` — código 2. Informa apenas nomes de variáveis, nunca valores.
+- **Configuração ausente (execução real):** `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_BASE_URL, LLM_MODEL.` — código 2. Informa apenas nomes de variáveis, nunca valores.
 - **Falha de comunicação (falha induzida, execução real):** chamada a `https://llm-internal.softex:9001/v1` fora da rede da plataforma, com chave fictícia → `Erro: Nao foi possivel conectar ao servico de LLM. Verifique LLM_BASE_URL, a rede e o agendamento.` — código 4. O log registra só `ConnectionError`.
 
 ### 5.2 Matriz de cenários mínimos
@@ -66,13 +67,17 @@ Casos (arquivos em `exemplos/entradas/`):
 |---|---|---|
 | Entrada válida | Execução com LLM real (seção 6, caso 01) | **[PREENCHER]** |
 | Entrada vazia | 5.1 + `test_entrada.py`, `test_main.py` | Feito |
-| Credencial ausente | 5.1 + `test_config.py`, `test_main.py` | Feito |
-| Credencial inválida | Simulada por teste (HTTP 401/403 → código 3, em `test_client.py`/`test_main.py`). Falta executar com chave errada na plataforma | **[PREENCHER]** execução real |
+| Credencial ausente | Configuração ausente (5.1) e chave ausente com serviço que a exige (`test_client.py`: 401 sem chave → código 3). Observação real na plataforma: 5.3 | Parcial: **[PREENCHER]** se o endpoint real exige chave |
+| Credencial inválida | Simulada por teste (HTTP 401/403 → código 3, em `test_client.py`/`test_main.py`). Na plataforma: iniciar com `LLM_API_KEY=invalida` e registrar o que ocorreu. Se o endpoint ignorar a chave e responder normalmente, registre essa ausência do fenômeno e o teste feito | **[PREENCHER]** execução real |
 | Falha de comunicação | 5.1 (execução real) + `test_client.py` | Feito |
 | Teste sem chamada real | `parser`, `prompt`, `entrada`, `config`, `formatar` e `client` (com `requests.post` simulado) | Feito |
 | Ambiente limpo | Clonar em pasta/máquina nova e seguir só o README | **[PREENCHER]** data, SO e resultado |
 | Proteção de segredo | Comandos do README (seção Testes) sobre o repositório publicado | **[PREENCHER]** resultado |
 | Avaliação por pares (Moodle) | Duas avaliações de autores distintos | **[PREENCHER]** |
+
+### 5.3 Execução na plataforma (primeira versão, 22/11/2026)
+
+Container iniciado na plataforma com `LLM_BASE_URL` e `LLM_MODEL` definidos e sem `LLM_API_KEY`. O log mostrou `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_API_KEY.` e o container parou. Isso comprovou três coisas: a imagem executa na plataforma, as variáveis do dashboard chegam ao programa, e a falha é informada sem expor dados. Também revelou uma decisão a corrigir: o guia da plataforma não prevê chave, então a obrigatoriedade foi removida (seção 3). **[PREENCHER]** inclua o print do log e a execução seguinte com a versão corrigida.
 
 Observação: a credencial inválida real e a falha de comunicação são **falhas induzidas** (chave fictícia / host inacessível), e não ocorrências espontâneas.
 

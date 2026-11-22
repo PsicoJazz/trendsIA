@@ -14,7 +14,9 @@ log = logging.getLogger(__name__)
 def chamar_llm(config: Config, mensagens: List[Dict[str, str]]) -> str:
     """Envia a solicitacao e devolve o texto da resposta do modelo."""
     url = f"{config.base_url}/chat/completions"
-    cabecalhos = {"Authorization": f"Bearer {config.api_key}", "Content-Type": "application/json"}
+    cabecalhos = {"Content-Type": "application/json"}
+    if config.api_key:
+        cabecalhos["Authorization"] = f"Bearer {config.api_key}"
     corpo = {"model": config.modelo, "messages": mensagens, "temperature": 0.2}
 
     inicio = time.monotonic()
@@ -37,7 +39,9 @@ def chamar_llm(config: Config, mensagens: List[Dict[str, str]]) -> str:
     log.info("resposta http=%s duracao=%.1fs", resp.status_code, duracao)
 
     if resp.status_code in (401, 403):
-        raise CredencialInvalida("Credencial rejeitada pelo servico (LLM_API_KEY invalida ou sem permissao).")
+        if config.api_key:
+            raise CredencialInvalida("Credencial rejeitada pelo servico (LLM_API_KEY invalida ou sem permissao).")
+        raise CredencialInvalida("O servico exigiu credencial e LLM_API_KEY nao foi definida.")
     if resp.status_code == 429:
         raise ErroComunicacao("Servico sobrecarregado ou limite de uso atingido (HTTP 429). Aguarde e tente de novo.")
     if resp.status_code >= 400:

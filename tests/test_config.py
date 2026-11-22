@@ -11,16 +11,21 @@ def test_config_valida_normaliza_url_e_usa_timeout_padrao():
     assert c.base_url == "https://h:9001/v1" and c.timeout == 120
 
 
-def test_credencial_ausente_informa_so_o_nome_da_variavel():
+def test_chave_e_opcional():
     env = {k: v for k, v in BASE.items() if k != "LLM_API_KEY"}
+    assert carregar_config(env).api_key == ""
+
+
+def test_chave_so_com_espacos_vira_vazia():
+    assert carregar_config({**BASE, "LLM_API_KEY": "   "}).api_key == ""
+
+
+@pytest.mark.parametrize("faltando", ["LLM_BASE_URL", "LLM_MODEL"])
+def test_variavel_obrigatoria_ausente_informa_so_o_nome(faltando):
+    env = {k: v for k, v in BASE.items() if k != faltando}
     with pytest.raises(ConfigError) as e:
         carregar_config(env)
-    assert "LLM_API_KEY" in str(e.value)
-
-
-def test_credencial_so_com_espacos_conta_como_ausente():
-    with pytest.raises(ConfigError):
-        carregar_config({**BASE, "LLM_API_KEY": "   "})
+    assert faltando in str(e.value) and "segredo" not in str(e.value)
 
 
 @pytest.mark.parametrize("valor", ["abc", "0", "-3"])

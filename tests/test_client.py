@@ -63,6 +63,38 @@ def test_corpo_inesperado(monkeypatch, config, resp):
         client.chamar_llm(config, MSGS)
 
 
+def test_sem_chave_nao_envia_cabecalho_authorization(monkeypatch, config):
+    capturado = {}
+
+    def falso(url, headers=None, **k):
+        capturado.update(headers)
+        return RespostaFalsa(200, {"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(client.requests, "post", falso)
+    sem_chave = type(config)(base_url=config.base_url, modelo=config.modelo, api_key="", timeout=5)
+    assert client.chamar_llm(sem_chave, MSGS) == "ok"
+    assert "Authorization" not in capturado
+
+
+def test_com_chave_envia_bearer(monkeypatch, config):
+    capturado = {}
+
+    def falso(url, headers=None, **k):
+        capturado.update(headers)
+        return RespostaFalsa(200, {"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(client.requests, "post", falso)
+    client.chamar_llm(config, MSGS)
+    assert capturado["Authorization"] == "Bearer CHAVE-SECRETA-123"
+
+
+def test_401_sem_chave_orienta_a_definir_a_variavel(monkeypatch, config):
+    _patch(monkeypatch, RespostaFalsa(401))
+    sem_chave = type(config)(base_url=config.base_url, modelo=config.modelo, api_key="", timeout=5)
+    with pytest.raises(CredencialInvalida, match="LLM_API_KEY"):
+        client.chamar_llm(sem_chave, MSGS)
+
+
 def test_logs_nao_vazam_chave_nem_texto(monkeypatch, config, caplog):
     caplog.set_level(logging.DEBUG)
     _patch(monkeypatch, excecao=requests.exceptions.ConnectionError("detalhe com CHAVE-SECRETA-123"))

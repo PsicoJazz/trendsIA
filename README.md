@@ -38,7 +38,7 @@ Os testes automatizados **não** precisam de LLM, de credencial nem de rede.
 
 Linux/macOS:
 ```bash
-git clone <URL-DO-REPOSITORIO>
+git clone <https://github.com/PsicoJazz/trendsIA>
 cd planejador-aulas
 python3 -m venv .venv
 source .venv/bin/activate
@@ -47,7 +47,7 @@ pip install -r requirements-dev.txt
 
 Windows (PowerShell):
 ```powershell
-git clone <URL-DO-REPOSITORIO>
+git clone <https://github.com/PsicoJazz/trendsIA>
 cd planejador-aulas
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -65,7 +65,7 @@ pip install -r requirements-dev.txt
 |---|---|---|
 | `LLM_BASE_URL` | sim | URL base de uma API compatível com OpenAI. O programa chama `<LLM_BASE_URL>/chat/completions`. Ex.: `https://llm-internal.softex:9001/v1` (confirme o caminho `/v1` na documentação da plataforma) |
 | `LLM_MODEL` | sim | Nome do modelo (ex.: `qwen...`, conforme a plataforma) |
-| `LLM_API_KEY` | sim | Chave de acesso |
+| `LLM_API_KEY` | não | Chave de acesso. Só preencha se o serviço exigir; sem ela, nenhum cabeçalho de autenticação é enviado |
 | `LLM_TIMEOUT` | não | Tempo máximo de espera em segundos (padrão `120`) |
 
 Variáveis já definidas no ambiente (como as do dashboard da plataforma) têm prioridade sobre o `.env`.
@@ -88,7 +88,7 @@ echo "Aula sobre redes: modelo OSI e TCP/IP" | python -m planejador
 python -m planejador --pasta-entrada exemplos/entradas --pasta-saida saida
 ```
 
-Códigos de saída: `0` sucesso · `1` entrada inválida · `2` configuração ausente/inválida · `3` credencial rejeitada · `4` falha de comunicação · `5` resposta do modelo inválida.
+Códigos de saída: `0` sucesso · `1` entrada inválida · `2` configuração ausente/inválida (`LLM_BASE_URL`/`LLM_MODEL`) · `3` credencial rejeitada ou exigida e não definida · `4` falha de comunicação · `5` resposta do modelo inválida.
 
 ## Testes
 
@@ -101,7 +101,7 @@ Cobrem validação de entrada, configuração, montagem do prompt, interpretaç�
 Verificação de segredos antes de publicar:
 ```bash
 git ls-files | grep -E '(^|/)\.env$'          # não deve listar nada
-git log --all -p | grep -iE 'LLM_API_KEY=[^<[:space:]]+'   # não deve listar nada
+git log --all -p | grep -iE 'LLM_API_KEY=[^<[:space:]]+'   # não deve listar nada (relevante se você usar chave)
 ```
 
 ## Execução na plataforma TrendsIA
@@ -118,8 +118,8 @@ git log --all -p | grep -iE 'LLM_API_KEY=[^<[:space:]]+'   # não deve listar na
    ```
    LLM_BASE_URL=https://llm-internal.softex:9001/v1
    LLM_MODEL=<modelo>
-   LLM_API_KEY=<sua chave>
    ```
+   Acrescente `LLM_API_KEY=<chave>` apenas se o serviço exigir (o guia da plataforma não menciona chave). Nunca coloque credenciais na imagem nem em logs.
 5. **Iniciar** no horário agendado. Acompanhe em **Logs**.
 6. Os planejamentos ficam em `/persistent/saida/*.md` (somente `/persistent` sobrevive à parada do container).
 

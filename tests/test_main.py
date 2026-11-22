@@ -32,13 +32,21 @@ def test_entrada_vazia_impede_envio(ambiente, capsys):
     assert "vazia" in capsys.readouterr().err
 
 
-def test_credencial_ausente(monkeypatch, capsys):
+def test_configuracao_ausente(monkeypatch, capsys):
     monkeypatch.setattr("planejador.config.load_dotenv", lambda *a, **k: None)
     for k in ENV:
         monkeypatch.delenv(k, raising=False)
     assert m.main(["Aula sobre banco de dados e tabelas"], chamador=_chamador_ok) == 2
     err = capsys.readouterr().err
-    assert "LLM_API_KEY" in err and "CHAVE-SECRETA-123" not in err
+    assert "LLM_BASE_URL" in err and "LLM_MODEL" in err and "CHAVE-SECRETA-123" not in err
+
+
+def test_sem_chave_executa_normalmente(monkeypatch, capsys):
+    monkeypatch.setattr("planejador.config.load_dotenv", lambda *a, **k: None)
+    monkeypatch.setenv("LLM_BASE_URL", "https://h")
+    monkeypatch.setenv("LLM_MODEL", "m")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    assert m.main(["Aula sobre banco de dados e tabelas"], chamador=_chamador_ok) == 0
 
 
 def test_credencial_invalida_termina_controlado(ambiente, capsys):
