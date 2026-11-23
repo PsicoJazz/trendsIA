@@ -39,5 +39,30 @@ def test_url_sem_esquema():
         carregar_config({**BASE, "LLM_BASE_URL": "servidor:9001"})
 
 
+def test_verificacao_tls_padrao_e_ativa():
+    assert carregar_config(BASE).verify is True
+
+
+@pytest.mark.parametrize("valor", ["false", "FALSE", "0", "nao"])
+def test_verificacao_tls_pode_ser_desativada(valor):
+    assert carregar_config({**BASE, "LLM_VERIFY_SSL": valor}).verify is False
+
+
+def test_verify_ssl_invalido():
+    with pytest.raises(ConfigError, match="LLM_VERIFY_SSL"):
+        carregar_config({**BASE, "LLM_VERIFY_SSL": "talvez"})
+
+
+def test_ca_bundle_existente_e_usado(tmp_path):
+    cert = tmp_path / "ca.pem"
+    cert.write_text("x")
+    assert carregar_config({**BASE, "LLM_CA_BUNDLE": str(cert)}).verify == str(cert)
+
+
+def test_ca_bundle_inexistente(tmp_path):
+    with pytest.raises(ConfigError, match="LLM_CA_BUNDLE"):
+        carregar_config({**BASE, "LLM_CA_BUNDLE": str(tmp_path / "nao_existe.pem")})
+
+
 def test_chave_nao_aparece_no_repr():
     assert "segredo" not in repr(carregar_config(BASE))

@@ -1,7 +1,7 @@
 # Relatório — Planejador de Aulas com LLM (P0)
 
 > Instruções de instalação, configuração e execução estão no [README](README.md); este relatório registra decisões, evidências e limitações.
-
+> Campos marcados **[PREENCHER]** dependem de execuções que só podem ser feitas por você (no horário agendado da plataforma, no seu repositório ou no Moodle). Não os preencha sem ter feito a verificação.
 
 ## 1. Problema
 
@@ -56,7 +56,7 @@ Casos (arquivos em `exemplos/entradas/`):
 
 ### 5.1 Executadas (ambiente: Python 3.12.3, 15/11/2026, sem acesso à plataforma)
 
-- **Testes automatizados:** `python -m pytest` → **58 passed**. Nenhum faz chamada real ao LLM.
+- **Testes automatizados:** `python -m pytest` → **68 passed**. Nenhum faz chamada real ao LLM.
 - **Entrada vazia (execução real da CLI):** `Erro: A anotacao esta vazia. Escreva o que pretende ensinar, ...` — código de saída 1, nenhuma chamada ao LLM.
 - **Configuração ausente (execução real):** `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_BASE_URL, LLM_MODEL.` — código 2. Informa apenas nomes de variáveis, nunca valores.
 - **Falha de comunicação (falha induzida, execução real):** chamada a `https://llm-internal.softex:9001/v1` fora da rede da plataforma, com chave fictícia → `Erro: Nao foi possivel conectar ao servico de LLM. Verifique LLM_BASE_URL, a rede e o agendamento.` — código 4. O log registra só `ConnectionError`.
@@ -78,6 +78,10 @@ Casos (arquivos em `exemplos/entradas/`):
 ### 5.3 Execução na plataforma (primeira versão, 22/11/2026)
 
 Container iniciado na plataforma com `LLM_BASE_URL` e `LLM_MODEL` definidos e sem `LLM_API_KEY`. O log mostrou `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_API_KEY.` e o container parou. Isso comprovou três coisas: a imagem executa na plataforma, as variáveis do dashboard chegam ao programa, e a falha é informada sem expor dados. Também revelou uma decisão a corrigir: o guia da plataforma não prevê chave, então a obrigatoriedade foi removida (seção 3). **[PREENCHER]** inclua o print do log e a execução seguinte com a versão corrigida.
+
+### 5.4 Execução na plataforma (22–23/11/2026): falha de certificado TLS
+
+Com `LLM_BASE_URL` e `LLM_MODEL` corretos, todas as chamadas falharam em milissegundos com `SSLError` (`Concluido: 0 de 7`), e o `06_vazia` falhou na validação como esperado. Interpretação: o endpoint interno `https://llm-internal.softex:9001` é alcançável, mas seu certificado não é confiável para o Python da imagem. Decisão: acrescentar `LLM_CA_BUNDLE` (preferível) e `LLM_VERIFY_SSL` (desativa a verificação), ambos opcionais e documentados, e uma mensagem de erro própria para esse caso. **[PREENCHER]** qual opção foi usada e o resultado.
 
 Observação: a credencial inválida real e a falha de comunicação são **falhas induzidas** (chave fictícia / host inacessível), e não ocorrências espontâneas.
 
@@ -105,7 +109,8 @@ Se algum resultado esperado não ocorrer (por exemplo, o modelo obedecer à inje
 4. **Modo lote com serviço fora do ar:** cada arquivo espera o timeout (até 120 s) antes de falhar, o que consome o horário agendado. Melhoria possível: interromper após a primeira falha de comunicação.
 5. **Novas anotações na plataforma** exigem reconstruir a imagem.
 6. **Privacidade:** o texto da anotação é enviado ao serviço de LLM; o log registra apenas tamanho, status e tipo de erro.
-7. O `.gitignore` e o `.env.example` enviados tinham quebras de linha CRLF; a leitura da configuração aplica `strip()` para evitar efeitos disso.
+7. **TLS:** se for usado `LLM_VERIFY_SSL=false`, a conexão deixa de ser protegida contra interceptação. O risco é reduzido porque o endpoint só é acessível dentro da rede da plataforma, mas continua sendo uma limitação a registrar.
+8. O `.gitignore` e o `.env.example` enviados tinham quebras de linha CRLF; a leitura da configuração aplica `strip()` para evitar efeitos disso.
 
 ## 8. Processo, autoria e uso de IA
 

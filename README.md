@@ -38,7 +38,7 @@ Os testes automatizados **não** precisam de LLM, de credencial nem de rede.
 
 Linux/macOS:
 ```bash
-git clone <https://github.com/PsicoJazz/trendsIA>
+git clone <URL-DO-REPOSITORIO>
 cd planejador-aulas
 python3 -m venv .venv
 source .venv/bin/activate
@@ -47,7 +47,7 @@ pip install -r requirements-dev.txt
 
 Windows (PowerShell):
 ```powershell
-git clone <https://github.com/PsicoJazz/trendsIA>
+git clone <URL-DO-REPOSITORIO>
 cd planejador-aulas
 py -3.12 -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -67,6 +67,8 @@ pip install -r requirements-dev.txt
 | `LLM_MODEL` | sim | Nome do modelo (ex.: `qwen...`, conforme a plataforma) |
 | `LLM_API_KEY` | não | Chave de acesso. Só preencha se o serviço exigir; sem ela, nenhum cabeçalho de autenticação é enviado |
 | `LLM_TIMEOUT` | não | Tempo máximo de espera em segundos (padrão `120`) |
+| `LLM_VERIFY_SSL` | não | `true` (padrão) ou `false`. `false` desativa a verificação do certificado TLS: use **somente** no endpoint interno da plataforma, se ele usar certificado próprio (erro `SSLError`) |
+| `LLM_CA_BUNDLE` | não | Caminho de um certificado `.pem` a confiar. Alternativa mais segura a `LLM_VERIFY_SSL=false`, se a plataforma fornecer o certificado |
 
 Variáveis já definidas no ambiente (como as do dashboard da plataforma) têm prioridade sobre o `.env`.
 
@@ -119,6 +121,7 @@ git log --all -p | grep -iE 'LLM_API_KEY=[^<[:space:]]+'   # não deve listar na
    LLM_BASE_URL=https://llm-internal.softex:9001/v1
    LLM_MODEL=<modelo>
    ```
+   Se o log mostrar `SSLError` / `Falha na verificacao do certificado TLS`, acrescente `LLM_VERIFY_SSL=false` (endpoint interno com certificado próprio).
    Acrescente `LLM_API_KEY=<chave>` apenas se o serviço exigir (o guia da plataforma não menciona chave). Nunca coloque credenciais na imagem nem em logs.
 5. **Iniciar** no horário agendado. Acompanhe em **Logs**.
 6. Os planejamentos ficam em `/persistent/saida/*.md` (somente `/persistent` sobrevive à parada do container).
@@ -149,6 +152,7 @@ relatorio.md    decisões, evidências e limitações
 
 ## Limitações conhecidas
 
+- `LLM_VERIFY_SSL=false` remove a proteção contra interceptação da conexão. Aceitável apenas na rede interna da plataforma; prefira `LLM_CA_BUNDLE` se houver certificado.
 - A saída do LLM varia entre execuções; o programa valida a **estrutura**, não a qualidade pedagógica do conteúdo. Revise o plano antes de usá-lo.
 - O contrato da API (`/chat/completions`, formato OpenAI) é uma suposição baseada no uso de `LLM_BASE_URL`/`LLM_MODEL`; confirme na documentação da plataforma.
 - No modo lote, se o serviço estiver fora do ar, cada arquivo espera o timeout antes de falhar (a execução só é interrompida cedo em caso de credencial rejeitada).

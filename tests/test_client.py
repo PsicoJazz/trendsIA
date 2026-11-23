@@ -95,6 +95,27 @@ def test_401_sem_chave_orienta_a_definir_a_variavel(monkeypatch, config):
         client.chamar_llm(sem_chave, MSGS)
 
 
+def test_erro_de_certificado_tem_mensagem_especifica(monkeypatch, config):
+    _patch(monkeypatch, excecao=requests.exceptions.SSLError("detalhe interno"))
+    with pytest.raises(ErroComunicacao, match="LLM_VERIFY_SSL"):
+        client.chamar_llm(config, MSGS)
+
+
+def test_parametro_verify_e_repassado_ao_requests(monkeypatch, config):
+    capturado = {}
+
+    def falso(url, **k):
+        capturado.update(k)
+        return RespostaFalsa(200, {"choices": [{"message": {"content": "ok"}}]})
+
+    monkeypatch.setattr(client.requests, "post", falso)
+    sem_tls = type(config)(base_url=config.base_url, modelo=config.modelo, api_key="", timeout=5, verify=False)
+    client.chamar_llm(sem_tls, MSGS)
+    assert capturado["verify"] is False
+    client.chamar_llm(config, MSGS)
+    assert capturado["verify"] is True
+
+
 def test_logs_nao_vazam_chave_nem_texto(monkeypatch, config, caplog):
     caplog.set_level(logging.DEBUG)
     _patch(monkeypatch, excecao=requests.exceptions.ConnectionError("detalhe com CHAVE-SECRETA-123"))

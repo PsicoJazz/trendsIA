@@ -1,7 +1,8 @@
 """Carregamento e validacao da configuracao (variaveis de ambiente / .env)."""
 import os
 from dataclasses import dataclass, field
-from typing import Mapping, Optional
+from pathlib import Path
+from typing import Mapping, Optional, Union
 
 from dotenv import load_dotenv
 
@@ -16,6 +17,7 @@ class Config:
     modelo: str
     api_key: str = field(default="", repr=False)  # opcional; repr=False: nunca aparece em print/log
     timeout: int = TIMEOUT_PADRAO
+    verify: Union[bool, str] = True  # True, False ou caminho de um certificado CA
 
 
 def carregar_config(env: Optional[Mapping[str, str]] = None) -> Config:
@@ -46,4 +48,17 @@ def carregar_config(env: Optional[Mapping[str, str]] = None) -> Config:
     except ValueError:
         raise ConfigError("LLM_TIMEOUT deve ser um numero inteiro positivo (segundos).") from None
 
-    return Config(base_url=base_url, modelo=ler("LLM_MODEL"), api_key=ler("LLM_API_KEY"), timeout=timeout)
+    verify: Union[bool, str] = True
+    flag = ler("LLM_VERIFY_SSL").lower()
+    if flag in ("false", "0", "no", "nao", "não"):
+        verify = False
+    elif flag not in ("", "true", "1", "yes", "sim"):
+        raise ConfigError("LLM_VERIFY_SSL deve ser true ou false.")
+    elif ler("LLM_CA_BUNDLE"):
+        if not Path(ler("LLM_CA_BUNDLE")).is_file():
+            raise ConfigError("LLM_CA_BUNDLE aponta para um arquivo que nao existe.")
+        verify = ler("LLM_CA_BUNDLE")
+
+    return Config(
+        base_url=base_url, modelo=ler("LLM_MODEL"), api_key=ler("LLM_API_KEY"), timeout=timeout, verify=verify
+    )
