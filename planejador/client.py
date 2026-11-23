@@ -53,6 +53,11 @@ def chamar_llm(config: Config, mensagens: List[Dict[str, str]]) -> str:
     duracao = time.monotonic() - inicio
     log.info("resposta http=%s duracao=%.1fs", resp.status_code, duracao)
 
+    if config.debug and resp.status_code >= 400:
+        # Diagnostico opt-in: trecho curto da mensagem de erro DO SERVIDOR (nunca a nossa solicitacao).
+        trecho = " ".join(str(getattr(resp, "text", "") or "").split())[:300]
+        log.error("DEBUG corpo do erro http=%s: %s", resp.status_code, trecho)
+
     if resp.status_code in (401, 403):
         if config.api_key:
             raise CredencialInvalida("Credencial rejeitada pelo servico (LLM_API_KEY invalida ou sem permissao).")

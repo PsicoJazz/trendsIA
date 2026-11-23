@@ -18,6 +18,7 @@ class Config:
     api_key: str = field(default="", repr=False)  # opcional; repr=False: nunca aparece em print/log
     timeout: int = TIMEOUT_PADRAO
     verify: Union[bool, str] = True  # True, False ou caminho de um certificado CA
+    debug: bool = False  # registra trecho da mensagem de erro do servico (so para diagnostico)
 
 
 def carregar_config(env: Optional[Mapping[str, str]] = None) -> Config:
@@ -60,5 +61,10 @@ def carregar_config(env: Optional[Mapping[str, str]] = None) -> Config:
         verify = ler("LLM_CA_BUNDLE")
 
     return Config(
-        base_url=base_url, modelo=ler("LLM_MODEL"), api_key=ler("LLM_API_KEY"), timeout=timeout, verify=verify
+        base_url=base_url,
+        modelo=ler("LLM_MODEL"),
+        api_key=ler("LLM_API_KEY"),
+        timeout=timeout,
+        verify=verify,
+        debug=ler("LLM_DEBUG").lower() in ("true", "1", "yes", "sim"),
     )

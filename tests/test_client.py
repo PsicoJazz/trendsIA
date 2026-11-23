@@ -116,6 +116,28 @@ def test_parametro_verify_e_repassado_ao_requests(monkeypatch, config):
     assert capturado["verify"] is True
 
 
+def test_debug_registra_corpo_do_erro_do_servidor(monkeypatch, config, caplog):
+    resp = RespostaFalsa(404)
+    resp.text = "model 'xyz' not found"
+    _patch(monkeypatch, resp)
+    com_debug = type(config)(base_url=config.base_url, modelo=config.modelo, api_key=config.api_key, timeout=5, debug=True)
+    caplog.set_level(logging.ERROR)
+    with pytest.raises(ErroComunicacao):
+        client.chamar_llm(com_debug, MSGS)
+    assert "model 'xyz' not found" in caplog.text
+    assert "texto do professor" not in caplog.text and "CHAVE-SECRETA-123" not in caplog.text
+
+
+def test_sem_debug_corpo_do_erro_nao_e_registrado(monkeypatch, config, caplog):
+    resp = RespostaFalsa(404)
+    resp.text = "segredo-do-servidor"
+    _patch(monkeypatch, resp)
+    caplog.set_level(logging.DEBUG)
+    with pytest.raises(ErroComunicacao):
+        client.chamar_llm(config, MSGS)
+    assert "segredo-do-servidor" not in caplog.text
+
+
 def test_logs_nao_vazam_chave_nem_texto(monkeypatch, config, caplog):
     caplog.set_level(logging.DEBUG)
     _patch(monkeypatch, excecao=requests.exceptions.ConnectionError("detalhe com CHAVE-SECRETA-123"))

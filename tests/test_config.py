@@ -64,5 +64,10 @@ def test_ca_bundle_inexistente(tmp_path):
         carregar_config({**BASE, "LLM_CA_BUNDLE": str(tmp_path / "nao_existe.pem")})
 
 
+def test_debug_desligado_por_padrao_e_ligavel():
+    assert carregar_config(BASE).debug is False
+    assert carregar_config({**BASE, "LLM_DEBUG": "true"}).debug is True
+
+
 def test_chave_nao_aparece_no_repr():
     assert "segredo" not in repr(carregar_config(BASE))

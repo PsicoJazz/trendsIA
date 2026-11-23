@@ -56,7 +56,7 @@ Casos (arquivos em `exemplos/entradas/`):
 
 ### 5.1 Executadas (ambiente: Python 3.12.3, 15/11/2026, sem acesso à plataforma)
 
-- **Testes automatizados:** `python -m pytest` → **68 passed**. Nenhum faz chamada real ao LLM.
+- **Testes automatizados:** `python -m pytest` → **71 passed**. Nenhum faz chamada real ao LLM.
 - **Entrada vazia (execução real da CLI):** `Erro: A anotacao esta vazia. Escreva o que pretende ensinar, ...` — código de saída 1, nenhuma chamada ao LLM.
 - **Configuração ausente (execução real):** `Erro: Configuracao incompleta. Defina no .env ou no ambiente: LLM_BASE_URL, LLM_MODEL.` — código 2. Informa apenas nomes de variáveis, nunca valores.
 - **Falha de comunicação (falha induzida, execução real):** chamada a `https://llm-internal.softex:9001/v1` fora da rede da plataforma, com chave fictícia → `Erro: Nao foi possivel conectar ao servico de LLM. Verifique LLM_BASE_URL, a rede e o agendamento.` — código 4. O log registra só `ConnectionError`.
@@ -82,6 +82,10 @@ Container iniciado na plataforma com `LLM_BASE_URL` e `LLM_MODEL` definidos e se
 ### 5.4 Execução na plataforma (22–23/11/2026): falha de certificado TLS
 
 Com `LLM_BASE_URL` e `LLM_MODEL` corretos, todas as chamadas falharam em milissegundos com `SSLError` (`Concluido: 0 de 7`), e o `06_vazia` falhou na validação como esperado. Interpretação: o endpoint interno `https://llm-internal.softex:9001` é alcançável, mas seu certificado não é confiável para o Python da imagem. Decisão: acrescentar `LLM_CA_BUNDLE` (preferível) e `LLM_VERIFY_SSL` (desativa a verificação), ambos opcionais e documentados, e uma mensagem de erro própria para esse caso. **[PREENCHER]** qual opção foi usada e o resultado.
+
+### 5.5 Execução na plataforma (23/11/2026): HTTP 404
+
+Com `LLM_VERIFY_SSL=false`, o log mostrou o aviso de TLS desativado e `resposta http=404` em todas as chamadas (`Concluido: 0 de 7`); o `06_vazia` falhou na validação como esperado. Interpretação: a conexão e o certificado deixaram de ser o problema; o 404 indica caminho da API ou nome do modelo incorretos. O guia da plataforma informa apenas o endereço base, sem caminho, modelo ou formato. Decisão: acrescentar `LLM_DEBUG` (opcional) para registrar a mensagem de erro do servidor e identificar a causa em uma execução. **[PREENCHER]** causa encontrada e correção aplicada.
 
 Observação: a credencial inválida real e a falha de comunicação são **falhas induzidas** (chave fictícia / host inacessível), e não ocorrências espontâneas.
 

@@ -68,6 +68,7 @@ pip install -r requirements-dev.txt
 | `LLM_API_KEY` | não | Chave de acesso. Só preencha se o serviço exigir; sem ela, nenhum cabeçalho de autenticação é enviado |
 | `LLM_TIMEOUT` | não | Tempo máximo de espera em segundos (padrão `120`) |
 | `LLM_VERIFY_SSL` | não | `true` (padrão) ou `false`. `false` desativa a verificação do certificado TLS: use **somente** no endpoint interno da plataforma, se ele usar certificado próprio (erro `SSLError`) |
+| `LLM_DEBUG` | não | `true` registra, nos erros HTTP, um trecho (300 caracteres) da mensagem de erro **do servidor**. Use só para diagnosticar (ex.: HTTP 404) e desative depois |
 | `LLM_CA_BUNDLE` | não | Caminho de um certificado `.pem` a confiar. Alternativa mais segura a `LLM_VERIFY_SSL=false`, se a plataforma fornecer o certificado |
 
 Variáveis já definidas no ambiente (como as do dashboard da plataforma) têm prioridade sobre o `.env`.
